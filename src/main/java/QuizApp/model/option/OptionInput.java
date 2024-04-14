@@ -5,6 +5,9 @@ import lombok.Getter;
 import lombok.Setter;
 import QuizApp.model.question.Question;
 
+
+import javax.validation.constraints.NotNull;
+
 @Getter
 @Setter
 public class OptionInput {
@@ -12,11 +15,11 @@ public class OptionInput {
     @NotBlank(message = "Option details must be provided")
     private String optionDetails;
 
-    @NotBlank(message = "Option's correctness must be provided")
+    @NotNull(message = "Option's correctness must be provided")
     private boolean ifCorrect;
 
-    @NotBlank(message = "Option's question id must be provided")
-    private int questionId;
+    @NotNull(message = "Option's question id must be provided")
+    private Integer questionId;
 
     private Question question;
 }

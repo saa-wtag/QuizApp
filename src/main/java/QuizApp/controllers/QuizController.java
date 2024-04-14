@@ -1,6 +1,8 @@
 package QuizApp.controllers;
 
 import javax.validation.Valid;
+
+import QuizApp.model.quiz.AnswerInput;
 import QuizApp.model.quiz.Quiz;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -43,8 +45,8 @@ public class QuizController {
     }
 
     @PostMapping("/submit/{quizId}")
-    public ResponseEntity<Quiz> submitAnswers(@PathVariable int quizId, @Valid @RequestBody List<Integer> answerIds) {
-        Quiz quiz = quizService.submitAnswers(quizId, answerIds);
+    public ResponseEntity<Quiz> submitAnswers(@PathVariable int quizId, @Valid @RequestBody AnswerInput answers) {
+        Quiz quiz = quizService.submitAnswers(quizId, answers.getAnswerIds());
         return ResponseEntity.ok(quiz);
     }
 

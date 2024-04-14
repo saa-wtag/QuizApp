@@ -1,11 +1,12 @@
 package QuizApp.services.question;
 
 
+import QuizApp.exceptions.ObjectNotFoundException;
 import QuizApp.model.question.Question;
+import QuizApp.repositories.QuestionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import QuizApp.repositories.question.QuestionDao;
 
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -14,44 +15,34 @@ import java.util.Objects;
 @Service
 @Transactional
 public class QuestionServiceImpl implements QuestionService{
-    private final QuestionDao questionDao;
+
+    private QuestionRepository questionRepository;
 
     @Autowired
-    public QuestionServiceImpl(QuestionDao questionDao) {
-        this.questionDao = questionDao;
+    public QuestionServiceImpl(QuestionRepository questionRepository) {
+        this.questionRepository = questionRepository;
     }
 
     @Override
     public Question createQuestion(Question question) {
-        return questionDao.saveQuestion(question);
+        return questionRepository.save(question);
     }
 
-    //    @Override
-//    public Question updateQuestionDetails(int questionId, Question question) {
-//        Question dbQuestion = questionDao.getQuestion(questionId);
-//        if (Objects.nonNull(dbQuestion)) {
-//            dbQuestion.setQuesDetails(question.getQuesDetails());
-//            return questionDao.saveQuestion(dbQuestion);
-//        } else {
-//            throw new NoSuchElementException("There is no such question!");
-//        }
-//    }
-//
     @Override
     public Question updateQuestionDetails(int questionId, Question question) {
-        Question dbQuestion = questionDao.getQuestion(questionId);
+        Question dbQuestion = getQuestion(questionId);
         if (Objects.nonNull(dbQuestion)) {
             dbQuestion.setQuesDetails(question.getQuesDetails());
             dbQuestion.getOptions().forEach(option -> {
             });
-            return questionDao.saveQuestion(dbQuestion);
+            return questionRepository.save(dbQuestion);
         } else {
             throw new NoSuchElementException("There is no such question!");
         }
     }
     @Override
     public Question getQuestion(int questionId) {
-        Question question = questionDao.getQuestion(questionId);
+        Question question = questionRepository.findById(questionId).orElseThrow(() -> new ObjectNotFoundException("Question not found"));;
         if (Objects.isNull(question)) {
             throw new NoSuchElementException("There is no such question!");
         }
@@ -61,9 +52,9 @@ public class QuestionServiceImpl implements QuestionService{
 
     @Override
     public void deleteQuestion(int questionId) {
-        Question question = questionDao.getQuestion(questionId);
+        Question question = getQuestion(questionId);
         if (question != null) {
-            questionDao.deleteQuestion(question);
+            questionRepository.delete(question);
         } else {
             throw new NoSuchElementException("Question not found with ID: " + questionId);
         }
@@ -71,6 +62,6 @@ public class QuestionServiceImpl implements QuestionService{
 
     @Override
     public List<Question> getRandomQuestionsForQuiz() {
-        return questionDao.getRandomQuestions();
+        return questionRepository.findRandomQuestions();
     }
 }

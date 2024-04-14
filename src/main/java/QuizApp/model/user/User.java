@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import QuizApp.model.quiz.Quiz;
+import org.springframework.security.core.userdetails.UserDetails;
 //import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.List;
@@ -13,7 +14,7 @@ import java.util.List;
 @Entity
 @Table(name="tbl_users")
 @Data
-public class User {
+public abstract class User implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private int  userId;

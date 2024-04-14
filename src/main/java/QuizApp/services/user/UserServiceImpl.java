@@ -2,10 +2,13 @@ package QuizApp.services.user;
 
 
 import QuizApp.model.user.User;
+import QuizApp.repositories.UserRepository;
+import QuizApp.exceptions.ObjectNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import QuizApp.repositories.user.UserDao;
+
 
 import java.util.NoSuchElementException;
 import java.util.Objects;
@@ -13,17 +16,18 @@ import java.util.Objects;
 @Service
 @Transactional
 public class UserServiceImpl implements UserService{
-    private final UserDao userDao;
+
+    private final UserRepository userRepository;
 
     @Autowired
-    public UserServiceImpl(UserDao userDao) {
-        this.userDao = userDao;
+    public UserServiceImpl(UserRepository userRepository) {
+        this.userRepository = userRepository;
     }
 
     @Override
     public User registerUser(User user) {
         user.setRole(User.UserRole.USER);
-        return userDao.saveUser(user);
+        return userRepository.save(user);
     }
 
     @Override
@@ -40,12 +44,12 @@ public class UserServiceImpl implements UserService{
             existingUser.setUserPassword(user.getUserPassword());
         }
 
-        return userDao.saveUser(existingUser);
+        return userRepository.save(existingUser);
     }
 
     @Override
     public User getUser(int userId) {
-        User user = userDao.getUser(userId);;
+        User user = userRepository.findById(userId).orElseThrow(() -> new ObjectNotFoundException("User not found"));
         if(Objects.isNull(user)){
             throw new NoSuchElementException("There is no such user!");
         }
@@ -59,13 +63,19 @@ public class UserServiceImpl implements UserService{
 
     @Override
     public void deleteUser(int userId) {
-        User user = userDao.getUser(userId);
+        User user = userRepository.findById(userId).orElseThrow(() -> new ObjectNotFoundException("User not found"));
 
         if (user != null) {
-            userDao.deleteUser(user);
+            userRepository.delete(user);
         } else {
             throw new NoSuchElementException("User not found with ID: " + userId);
         }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public User loadUserByUsername(String userName) throws UsernameNotFoundException {
+        return userRepository.findByUserName(userName);
     }
 
 }

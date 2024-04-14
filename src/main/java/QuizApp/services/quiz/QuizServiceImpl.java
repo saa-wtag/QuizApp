@@ -1,31 +1,33 @@
 package QuizApp.services.quiz;
 
 
+import QuizApp.exceptions.ObjectNotFoundException;
 import QuizApp.model.question.Question;
 import QuizApp.model.quiz.Quiz;
 import QuizApp.model.user.User;
+import QuizApp.repositories.QuizRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import QuizApp.repositories.quiz.QuizDao;
 import QuizApp.services.question.QuestionService;
 import QuizApp.services.user.UserService;
 
 import java.util.List;
-import java.util.Optional;
+
 
 @Service
 @Transactional
 public class QuizServiceImpl implements QuizService{
-    private final QuizDao quizDao;
     private final UserService userService;
     private final QuestionService questionService;
+    private final QuizRepository quizRepository;
 
     @Autowired
-    public QuizServiceImpl(QuizDao quizDao, UserService userService, QuestionService questionService) {
-        this.quizDao = quizDao;
+    public QuizServiceImpl(UserService userService, QuestionService questionService, QuizRepository quizRepository) {
+
         this.userService = userService;
         this.questionService = questionService;
+        this.quizRepository = quizRepository;
     }
     @Override
     public Quiz createQuiz(int userId) {
@@ -35,24 +37,23 @@ public class QuizServiceImpl implements QuizService{
         quiz.setUser(user);
         quiz.setQuestions(questions);
 
-        return quizDao.saveQuiz(quiz);
+        return quizRepository.save(quiz);
     }
 
     @Override
     public Quiz getQuiz(int quizId) {
-        return quizDao.getQuiz(quizId);
+        return quizRepository.findById(quizId).orElseThrow(() -> new ObjectNotFoundException("Quiz not found"));
     }
 
     @Override
     public List<Quiz> listQuizzesForUser(int userId) {
 
-        return quizDao.findQuizzesByUserId(userId);
+        return quizRepository.findByUserUserId(userId);
     }
 
     @Override
     public Quiz submitAnswers(int quizId, List<Integer> answerIds) {
-        Quiz quiz = Optional.ofNullable(quizDao.getQuiz(quizId))
-                .orElseThrow(() -> new IllegalArgumentException("Quiz not found."));
+        Quiz quiz = getQuiz(quizId);
 
         long score = quiz.getQuestions().stream()
                 .flatMap(question -> question.getOptions().stream())
@@ -60,11 +61,11 @@ public class QuizServiceImpl implements QuizService{
                 .count();
 
         quiz.setScore(score/4);
-        return quizDao.saveQuiz(quiz);
+        return quizRepository.save(quiz);
     }
 
     @Override
     public void deleteQuiz(int quizId) {
-        quizDao.deleteQuiz(quizId);
+        quizRepository.deleteById(quizId);
     }
 }

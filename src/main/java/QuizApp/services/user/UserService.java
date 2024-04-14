@@ -7,4 +7,6 @@ public interface UserService {
     User updateUserDetails(int userId, User user);
     User getUser(int userId);
     void deleteUser(int userId);
+    User loadUserByUsername(String userEmail);
+
 }
