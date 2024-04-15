@@ -1,11 +1,13 @@
 package QuizApp.services.user;
 
 
+import QuizApp.exceptions.UserAlreadyExistsException;
 import QuizApp.model.user.User;
 import QuizApp.repositories.UserRepository;
 import QuizApp.exceptions.ObjectNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,15 +20,43 @@ import java.util.Objects;
 public class UserServiceImpl implements UserService{
 
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Autowired
-    public UserServiceImpl(UserRepository userRepository) {
+    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
     }
+
 
     @Override
     public User registerUser(User user) {
+        // Check if the username or email already exists
+        if (Objects.nonNull(userRepository.findByUserName(user.getUserEmail()))) {
+            throw new UserAlreadyExistsException("Username is already registered");
+        }
+        // Encode the password before saving the user
+        user.setUserPassword(passwordEncoder.encode(user.getUserPassword()));
+
+        // Set the default role
         user.setRole(User.UserRole.USER);
+
+        // Save the user
+        return userRepository.save(user);
+    }
+    @Override
+    public User registerAdmin(User user) {
+        // Check if the username or email already exists
+        if (Objects.nonNull(userRepository.findByUserName(user.getUserEmail()))) {
+            throw new UserAlreadyExistsException("Username is already registered");
+        }
+        // Encode the password before saving the user
+        user.setUserPassword(passwordEncoder.encode(user.getUserPassword()));
+
+        // Set the default role
+        user.setRole(User.UserRole.ADMIN);
+
+        // Save the user
         return userRepository.save(user);
     }
 
@@ -34,14 +64,14 @@ public class UserServiceImpl implements UserService{
     public User updateUserDetails(int userId, User user) {
         User existingUser = getUser(userId);
 
-        if (user.getUserName() != null && !user.getUserName().trim().isEmpty()) {
-            existingUser.setUserName(user.getUserName());
+        if (user.getUsername() != null && !user.getUsername().trim().isEmpty()) { //getUsername edited
+            existingUser.setUserName(user.getUsername());
         }
         if (user.getUserEmail() != null && !user.getUserEmail().trim().isEmpty()) {
             existingUser.setUserEmail(user.getUserEmail());
         }
         if (user.getUserPassword() != null && !user.getUserPassword().trim().isEmpty()) {
-            existingUser.setUserPassword(user.getUserPassword());
+            existingUser.setUserPassword(passwordEncoder.encode(user.getUserPassword()));
         }
 
         return userRepository.save(existingUser);
@@ -75,7 +105,11 @@ public class UserServiceImpl implements UserService{
     @Override
     @Transactional(readOnly = true)
     public User loadUserByUsername(String userName) throws UsernameNotFoundException {
-        return userRepository.findByUserName(userName);
+        User user = userRepository.findByUserName(userName);
+        if (user == null)
+            throw new UsernameNotFoundException("User not found with username: " + userName);
+
+        return user;
     }
 
 }

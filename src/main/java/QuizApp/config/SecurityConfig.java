@@ -5,6 +5,7 @@ import QuizApp.config.jwt.JwtAuthenticationFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -27,9 +28,10 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig extends GlobalMethodSecurityConfiguration {
 
     private final JwtAuthenticationEntryPoint point;
-    private final JwtAuthenticationFilter filter;
+    private final JwtAuthenticationFilter filter ;
 
     @Autowired
+    @Lazy
     public SecurityConfig(JwtAuthenticationEntryPoint point, JwtAuthenticationFilter filter) {
         this.point = point;
         this.filter = filter;
@@ -40,13 +42,14 @@ public class SecurityConfig extends GlobalMethodSecurityConfiguration {
         http
                 .authorizeRequests()
                 .antMatchers("/users/login").permitAll()
-                .antMatchers(HttpMethod.POST, "/users").permitAll()
+                .antMatchers(HttpMethod.POST, "/users/*").permitAll()
+                .antMatchers(HttpMethod.POST, "/users/admin/*").permitAll()
                 .antMatchers(HttpMethod.PUT, "/users/*").hasAnyRole("ADMIN", "USER")
-                .antMatchers(HttpMethod.DELETE, "/users/*").hasAnyRole("ADMIN", "USER")
+                .antMatchers(HttpMethod.DELETE, "/users/*").hasAnyRole("ADMIN")
                 .antMatchers(HttpMethod.GET, "/users/*").hasAnyRole("ADMIN", "USER")
 
 
-                .antMatchers(HttpMethod.POST,"/questions").hasRole("ADMIN")
+                .antMatchers(HttpMethod.POST,"/questions/").hasRole("ADMIN")
                 .antMatchers(HttpMethod.PUT,"/questions/*").hasRole("ADMIN")
                 .antMatchers(HttpMethod.DELETE,"/questions/*").hasRole("ADMIN")
                 .antMatchers(HttpMethod.GET, "/questions").permitAll()
@@ -56,7 +59,7 @@ public class SecurityConfig extends GlobalMethodSecurityConfiguration {
                 .antMatchers(HttpMethod.DELETE,"/options/*").hasRole("ADMIN")
                 .antMatchers(HttpMethod.GET, "/options/*").permitAll()
 
-                .antMatchers(HttpMethod.POST, "/quizzes/*").hasAnyRole("USER")
+                .antMatchers(HttpMethod.POST, "/quizzes/*").hasRole("USER")
                 .antMatchers(HttpMethod.DELETE,"/quizzes/*").hasAnyRole("ADMIN", "USER")
                 .antMatchers(HttpMethod.GET, "/quizzes/*").hasAnyRole("ADMIN", "USER")
 

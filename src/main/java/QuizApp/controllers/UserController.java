@@ -27,6 +27,12 @@ public class UserController {
         User registeredUser = userService.registerUser(user);
         return new ResponseEntity<>(registeredUser, HttpStatus.CREATED);
     }
+    @PostMapping("/admin/")
+    public ResponseEntity<User> createAdmin(@Valid @RequestBody UserInput userInput) {
+        User user = QuizObjectMapper.convertUserInputToModel(userInput);
+        User registeredAdmin = userService.registerAdmin(user);
+        return new ResponseEntity<>(registeredAdmin, HttpStatus.CREATED);
+    }
 
     @GetMapping("/{userId}")
     public ResponseEntity<User> getUser(@PathVariable int userId) {
