@@ -6,6 +6,7 @@ import QuizApp.model.user.User;
 import QuizApp.repositories.UserRepository;
 import QuizApp.exceptions.ObjectNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -45,6 +46,7 @@ public class UserServiceImpl implements UserService{
         return userRepository.save(user);
     }
     @Override
+    @PreAuthorize("hasRole('ADMIN')")
     public User registerAdmin(User user) {
         // Check if the username or email already exists
         if (Objects.nonNull(userRepository.findByUserName(user.getUserEmail()))) {
@@ -61,6 +63,7 @@ public class UserServiceImpl implements UserService{
     }
 
     @Override
+    @PreAuthorize("#userId == principal.id")
     public User updateUserDetails(int userId, User user) {
         User existingUser = getUser(userId);
 
@@ -78,6 +81,7 @@ public class UserServiceImpl implements UserService{
     }
 
     @Override
+    @PreAuthorize("#userId == principal.id or hasRole('ADMIN')")
     public User getUser(int userId) {
         User user = userRepository.findById(userId).orElseThrow(() -> new ObjectNotFoundException("User not found"));
         if(Objects.isNull(user)){
@@ -92,6 +96,7 @@ public class UserServiceImpl implements UserService{
     }
 
     @Override
+    @PreAuthorize("hasRole('ADMIN')")
     public void deleteUser(int userId) {
         User user = userRepository.findById(userId).orElseThrow(() -> new ObjectNotFoundException("User not found"));
 
@@ -104,6 +109,7 @@ public class UserServiceImpl implements UserService{
 
     @Override
     @Transactional(readOnly = true)
+    @PreAuthorize("#userId == principal.id or hasRole('ADMIN')")
     public User loadUserByUsername(String userName) throws UsernameNotFoundException {
         User user = userRepository.findByUserName(userName);
         if (user == null)

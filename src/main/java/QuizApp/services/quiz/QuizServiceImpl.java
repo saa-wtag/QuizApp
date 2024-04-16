@@ -7,6 +7,7 @@ import QuizApp.model.quiz.Quiz;
 import QuizApp.model.user.User;
 import QuizApp.repositories.QuizRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import QuizApp.services.question.QuestionService;
@@ -29,7 +30,14 @@ public class QuizServiceImpl implements QuizService{
         this.questionService = questionService;
         this.quizRepository = quizRepository;
     }
+
+    public boolean isUserQuizOwner(int quizId, int userId) {
+        return quizRepository.findById(quizId)
+                .map(quiz -> quiz.getUser().getUserId() == userId)
+                .orElse(false);
+    }
     @Override
+    @PreAuthorize("#userId == principal.id")
     public Quiz createQuiz(int userId) {
         User user = userService.getUser(userId);
         List<Question> questions = questionService.getRandomQuestionsForQuiz();
@@ -41,17 +49,20 @@ public class QuizServiceImpl implements QuizService{
     }
 
     @Override
+    @PreAuthorize("@QuizServiceImpl.isUserQuizOwner(#quizId, principal.userId)")
     public Quiz getQuiz(int quizId) {
         return quizRepository.findById(quizId).orElseThrow(() -> new ObjectNotFoundException("Quiz not found"));
     }
 
     @Override
+    @PreAuthorize("#userId == principal.id or hasRole('ADMIN')")
     public List<Quiz> listQuizzesForUser(int userId) {
 
         return quizRepository.findByUserUserId(userId);
     }
 
     @Override
+    @PreAuthorize("@QuizServiceImpl.isUserQuizOwner(#quizId, principal.userId)")
     public Quiz submitAnswers(int quizId, List<Integer> answerIds) {
         Quiz quiz = getQuiz(quizId);
 
@@ -65,6 +76,7 @@ public class QuizServiceImpl implements QuizService{
     }
 
     @Override
+    @PreAuthorize("#userId == principal.id or hasRole('ADMIN')")
     public void deleteQuiz(int quizId) {
         quizRepository.deleteById(quizId);
     }
